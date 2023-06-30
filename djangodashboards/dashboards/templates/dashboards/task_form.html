@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load core %}
+
+
+{% block content %}
+
+<div class="container">
+    {% include 'partials/title_partial.html' %}
+</div>
+
+
+{% get_template_name as ttemplate_name %}
+{% with ttemplate=ttemplate_name %}
+{% include  ttemplate %}
+{% endwith %}
+
+
+
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/site.js' %}"></script>
+{% endblock scripts %}

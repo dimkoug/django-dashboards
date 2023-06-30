@@ -1,0 +1,42 @@
+{% load core %}
+<div class="container">
+    <div class="row py-2">
+        <div class="col-12">
+            <h1>{{object}}</h1>
+        </div>
+    </div>
+    <div class="row py-2">
+        <div class="col">
+            <strong>Start date: </strong> {{object.start_date|date:"d/m/Y"}}
+        </div>
+    </div>
+    <div class="row py-2">
+        <div class="col">
+            <strong>is completed:</strong> {% get_boolean_img object.is_completed %}
+        </div>
+    </div>
+    {% if object.documents.all %}
+    <div class="row">
+        <div class="col">
+            <table class="table table-stripped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in object.documents.all %}
+                    <tr>
+                        <td><a href="{{obj.document.url}}">{{obj}}</a></td>
+                        <td>
+                            <a href="{% url 'dashboards:delete-document' obj.pk %}"><i class="bi bi-x text-danger" style="font-size:1.5rem;"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>

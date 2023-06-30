@@ -1,0 +1,83 @@
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form action="" method="post" novalidate enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                       <label for="{{ form.name.id_for_label }}">{{form.name.label}}</label>
+                        {{ form.name }}
+                        <div class="invalid-feedback">
+                            {{ form.name.errors }}
+                          </div>
+                    </div>
+                    <div class="col">
+                        <label for="{{ form.column.id_for_label }}">{{form.column.label}}</label>
+                        {{ form.column }}
+                        <div class="invalid-feedback">
+                            {{ form.column.errors }}
+                          </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                       <label for="{{ form.start_date.id_for_label }}">{{form.start_date.label}}</label>
+                        {{ form.start_date }}
+                        <div class="invalid-feedback">
+                            {{ form.start_date.errors }}
+                          </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-check">
+                            <label for="{{ form.is_completed.id_for_label }}">{{form.is_completed.label}}</label>
+                            {{ form.is_completed }}
+                            <div class="invalid-feedback">
+                                {{ form.is_completed.errors }}
+                              </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <input type="file" id="files" name="files" multiple>
+                    </div>
+
+                </div>
+            {% include 'partials/form_buttons.html' %}
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    'use strict';
+    (function(w,d,$){
+
+        $(d).ready(function(){
+            $( "[id$='_date']" ).datepicker();
+            $("select[name*='column']" ).select2({
+                ajax: {
+                  url: '/dashboards/sb/columns/',
+                  data: function (params) {
+                    var query = {
+                      search: params.term,
+                    }
+                    // Query parameters will be ?search=[term]&type=public
+                    return query;
+                  }
+                }
+              });
+
+
+        }) /* document ready */
+
+        
+
+
+
+    })(window,document,jQuery)
+
+
+</script>

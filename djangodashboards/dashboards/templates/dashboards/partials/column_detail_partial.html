@@ -1,0 +1,42 @@
+{% load core %}
+<div class="container">
+    <div class="row py-2">
+        <div class="col-12">
+            <h1>{{object}}</h1>
+        </div>
+    </div>
+    <div class="row py-2">
+        <div class="col">
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'dashboards:task-create' %}?column={{object.id}}" class="btn btn-primary">Add Task</a>
+        </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <table class="table table-stripped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Start Date</th>
+                        <th>is completed</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in object.tasks.all %}
+                    <tr>
+                        <td><a href="{% get_url 'detail' obj %}">{{obj}}</a></td>
+                        <td>{{obj.start_date|date:"d/m/Y"}}</td>
+                        <td>{% get_boolean_img obj.is_completed %}</td>
+                        <td>
+                            {% include 'partials/actions.html' with obj=obj %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

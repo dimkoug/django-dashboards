@@ -1,0 +1,56 @@
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form action="" method="post" novalidate>
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                       <label for="{{ form.name.id_for_label }}">{{form.name.label}}</label>
+                        {{ form.name }}
+                        <div class="invalid-feedback">
+                            {{ form.name.errors }}
+                          </div>
+                    </div>
+                    <div class="col">
+                        <label for="{{ form.dashboard.id_for_label }}">{{form.dashboard.label}}</label>
+                        {{ form.dashboard }}
+                        <div class="invalid-feedback">
+                            {{ form.dashboard.errors }}
+                          </div>
+                    </div>
+                </div>
+
+            {% include 'partials/form_buttons.html' %}
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    'use strict';
+    (function(w,d,$){
+
+        $(d).ready(function(){
+
+            $("select[name*='dashboard']" ).select2({
+                ajax: {
+                  url: '/dashboards/sb/dashboards/',
+                  data: function (params) {
+                    var query = {
+                      search: params.term,
+                    }
+                    // Query parameters will be ?search=[term]&type=public
+                    return query;
+                  }
+                }
+              });
+
+
+        })/* document ready */
+
+
+    })(window,document,jQuery)
+
+
+</script>

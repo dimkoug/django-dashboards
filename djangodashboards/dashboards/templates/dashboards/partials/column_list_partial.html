@@ -1,0 +1,28 @@
+{% load core %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <table class="table table-stripped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Dashboard</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for obj in object_list %}
+                    <tr>
+                        <td><a href="{% get_url 'detail' obj %}">{{obj}}</a></td>
+                        <td><a href="{% get_url 'detail' obj.dashboard %}">{{obj.dashboard}}</a></td>
+                        <td>
+                            {% include 'partials/actions.html' with obj=obj %}
+
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

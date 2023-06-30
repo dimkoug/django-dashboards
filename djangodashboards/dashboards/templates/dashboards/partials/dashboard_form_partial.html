@@ -1,0 +1,19 @@
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <form action="" method="post" novalidate>
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col">
+                        <label for="{{ form.name.id_for_label }}">{{form.name.label}}</label>
+                        {{ form.name }}
+                        <div class="invalid-feedback">
+                            {{ form.name.errors }}
+                          </div>
+                    </div>
+                </div>
+            {% include 'partials/form_buttons.html' %}
+            </form>
+        </div>
+    </div>
+</div>
