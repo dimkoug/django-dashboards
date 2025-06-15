@@ -10,16 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+from urllib.parse import quote_plus
 import os
 from django.contrib.messages import constants as messages
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-PUBLIC_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..','..',  'public'))
-VIRTUAL_ENV_DIR = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), '..', '..', '.venv'))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
 
@@ -31,7 +28,11 @@ TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 SECRET_KEY = 'django-insecure-bgr3q15ny4n_4dosi71(=o4=v)i&x#r*#sc5l9ec3kk3&i*v!g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
+
+PAGINATED_BY = 10
+ALLOWED_ORIGINS = ['127.0.0.1']
+
 
 SESSION_COOKIE_NAME = 'djangodashboards'
 
@@ -62,6 +63,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'rest_framework',
     'rest_framework.authtoken',
+    "django_celery_results",
+    "django_celery_beat",
     'django_filters',
     'core',
     'users',
@@ -114,6 +117,13 @@ TEMPLATES = [
     },
 ]
 
+if DEBUG:
+    TEMPLATES[0]['OPTIONS']['loaders'] = (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    )
+
+
 WSGI_APPLICATION = 'djangodashboards.wsgi.application'
 
 
@@ -122,10 +132,28 @@ WSGI_APPLICATION = 'djangodashboards.wsgi.application'
 
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ['POSTGRES_DB'],
+#         'USER': os.environ['POSTGRES_USER'],
+#         'PASSWORD': os.environ['POSTGRES_PASSWORD'],
+#         'HOST': os.environ['DB_HOST'],
+#         'PORT': os.environ['DB_PORT'],
 #     }
 # }
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME":     os.environ["POSTGRES_DB"],
+        "USER":     os.environ["POSTGRES_USER"],
+        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+        "HOST":     os.environ["DB_HOST"],  # should be pgbouncer_dash
+        "PORT":     os.environ.get("DB_PORT", "6432"),
+        # --- PgBouncer-specific tweaks ------------------------------
+        "CONN_MAX_AGE": 0,                  # let PgBouncer recycle sockets
+        "DISABLE_SERVER_SIDE_CURSORS": True # required with POOL_MODE=transaction
+    }
+}
 
 
 # Password validation
@@ -165,10 +193,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(PUBLIC_DIR, "static")
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(PUBLIC_DIR, "media")
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
 STATICFILES_DIRS = [
@@ -185,11 +213,33 @@ STATICFILES_FINDERS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# configure gdal path based on your  configuration 
-try:
-    if os.name == 'nt':
-        os.environ['PATH'] = os.path.join(VIRTUAL_ENV_DIR, r'.\Lib\site-packages\osgeo') + ';' + os.environ['PATH']
-        os.environ['PROJ_LIB'] = os.path.join(VIRTUAL_ENV_DIR, r'.\Lib\site-packages\osgeo\data\proj') + ';' + os.environ['PATH']
-        GDAL_LIBRARY_PATH = os.path.join(VIRTUAL_ENV_DIR, r'.\Lib\site-packages\osgeo\gdal304.dll')
-except:
-    pass
+CELERY_BROKER_URL = "redis://redis_dash:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis_dash:6379/1"
+CELERY_TASK_SERIALIZER = CELERY_RESULT_SERIALIZER = "json"
+CELERY_ACCEPT_CONTENT = ["json"]
+
+# ─── Email ─────────────────────────────────────────────────────
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ["EMAIL_HOST"]       # example
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
+EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = SERVER_EMAIL = os.environ["SERVER_EMAIL"]
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": (
+            f"redis://{os.getenv('REDIS_CACHE_HOST','redis_cache_dash')}:"
+            f"{os.getenv('REDIS_CACHE_PORT','6379')}/"
+            f"{os.getenv('REDIS_CACHE_DB','0')}"
+        ),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"max_connections": 100},
+        },
+        "TIMEOUT": 60 * 15,   # 15 min default
+    }
+}
