@@ -161,3 +161,4 @@ cython_debug/
 *.whl
 settings_local.py
 migrations
+celerybeat-*
