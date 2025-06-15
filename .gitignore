@@ -160,5 +160,7 @@ cython_debug/
 #.idea/
 *.whl
 settings_local.py
-migrations
 celerybeat-*
+**/migrations/*.py
+**/migrations/*.pyc
+!**/migrations/__init__.py
