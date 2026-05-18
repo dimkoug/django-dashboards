@@ -39,9 +39,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # ---- Claude Code ----
-# Shared project config (.claude/settings.json, commands) is committed;
-# only personal/local overrides are ignored.
-.claude/settings.local.json
+# Ignore all .claude/ directories entirely (root and nested, e.g. backend/.claude/).
+.claude/
 
 # ---- IDE / editor ----
 .idea/
