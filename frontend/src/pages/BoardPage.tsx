@@ -25,7 +25,7 @@ import {
   useUpdateTodoMutation,
 } from '../features/api/apiSlice'
 import type { Column, Label, Todo } from '../features/api/apiSlice'
-import { isOverdue } from '../lib/due'
+import { dueBucket } from '../lib/due'
 
 function fmt(iso: string | null): string {
   return iso ? new Date(iso).toLocaleDateString() : '—'
@@ -49,12 +49,19 @@ function Card({
     transition,
     opacity: isDragging ? 0.4 : 1,
   }
-  const overdue = isOverdue(todo)
+  const bucket = dueBucket(todo)
+  const overdue = bucket === 'overdue'
+  const dueSoon = bucket === 'soon'
+  const cardClass = overdue
+    ? 'kanban-card overdue'
+    : dueSoon
+      ? 'kanban-card due-soon'
+      : 'kanban-card'
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={overdue ? 'kanban-card overdue' : 'kanban-card'}
+      className={cardClass}
       {...listeners}
       {...attributes}
     >
@@ -79,6 +86,7 @@ function Card({
       <small className="card-meta">
         ends {fmt(todo.end_date)}
         {overdue && ' · overdue'}
+        {dueSoon && ' · due soon'}
         {todo.users.length > 0 && ` · 👤 ${todo.users.length}`}
         {todo.subtask_summary.total > 0 &&
           ` · ☑ ${todo.subtask_summary.done}/${todo.subtask_summary.total}`}

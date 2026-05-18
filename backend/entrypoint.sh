@@ -19,6 +19,7 @@ else:
     sys.exit(f"Database {host}:{port} not reachable after 30s")
 PY
 
-# Hand off to the compose `command` (makemigrations + migrate + collectstatic
-# + uvicorn) as PID 1.
+# Hand off to the compose `command` as PID 1. For web that is
+# migrate + collectstatic + uvicorn; for celery/celery-beat it is the
+# celery worker / scheduler. Migrations are committed, not generated here.
 exec "$@"

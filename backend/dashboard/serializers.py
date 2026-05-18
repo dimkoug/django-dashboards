@@ -262,6 +262,32 @@ def notify_attachment(todo, actor):
     })
 
 
+def due_reminder_text(todo, overdue):
+    """Notification text for a due reminder. Kept as a single source of
+    truth so the notify_due command can dedupe on the exact string."""
+    return f'"{todo.name}" is {"overdue" if overdue else "due soon"}'
+
+
+def notify_due(todo, user_ids, overdue):
+    """Remind the given assignees that a todo is overdue / due soon
+    (persisted + real-time + email, the last gated by email_on_due)."""
+    ids = list(user_ids)
+    if not ids:
+        return
+    kind = 'due_overdue' if overdue else 'due_soon'
+    label = 'overdue' if overdue else 'due soon'
+    text = due_reminder_text(todo, overdue)
+    _persist(ids, kind, text, _todo_link(todo))
+    _email_users(ids, f'Reminder: "{todo.name}" is {label}',
+                 f'The todo "{todo.name}" is {label}.',
+                 'email_on_due')
+    _send_event(ids, {
+        'event': kind,
+        'todo_id': todo.id,
+        'todo_name': todo.name,
+    })
+
+
 def _deliver_webhook(url, data):
     try:
         req = urllib.request.Request(
@@ -301,16 +327,25 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, style={'input_type': 'password'})
+    password2 = serializers.CharField(
+        write_only=True, style={'input_type': 'password'})
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password']
+        fields = ['id', 'username', 'email', 'password', 'password2']
 
     def validate_password(self, value):
         validate_password(value)
         return value
 
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError(
+                {'password2': "Passwords don't match."})
+        return attrs
+
     def create(self, validated_data):
+        validated_data.pop('password2', None)
         return User.objects.create_user(
             username=validated_data['username'],
             email=validated_data.get('email', ''),
@@ -669,4 +704,5 @@ class WebhookSerializer(serializers.ModelSerializer):
 class PreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserPreference
-        fields = ['email_on_assign', 'email_on_mention']
+        fields = ['email_on_assign', 'email_on_mention', 'email_on_due',
+                  'theme']

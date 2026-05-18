@@ -213,3 +213,26 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     # Tokens are signed with SECRET_KEY (HS256) by default.
 }
+
+
+# Celery — Redis broker/result backend on dedicated dbs (2/3) so they
+# don't collide with the channel layer (db 0) or the cache (db 1).
+from celery.schedules import crontab  # noqa: E402
+
+_REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+_REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+
+CELERY_BROKER_URL = f'redis://{_REDIS_HOST}:{_REDIS_PORT}/2'
+CELERY_RESULT_BACKEND = f'redis://{_REDIS_HOST}:{_REDIS_PORT}/3'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+# Don't let a stuck reminder sweep run forever.
+CELERY_TASK_TIME_LIMIT = 300
+
+CELERY_BEAT_SCHEDULE = {
+    'due-reminders-hourly': {
+        'task': 'dashboard.tasks.send_due_reminders',
+        # Top of every hour.
+        'schedule': crontab(minute=0),
+    },
+}

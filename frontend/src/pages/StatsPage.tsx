@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   useGetDashboardStatsQuery,
   useGetDashboardsQuery,
+  useLazyExportDashboardQuery,
 } from '../features/api/apiSlice'
 
 function Bar({
@@ -35,8 +37,27 @@ export function StatsPage() {
   const dId = Number(dashboardId)
   const { data: dashboards } = useGetDashboardsQuery()
   const { data: s, isLoading, isError } = useGetDashboardStatsQuery(dId)
+  const [triggerExport] = useLazyExportDashboardQuery()
+  const [exportErr, setExportErr] = useState<string | null>(null)
 
   const dash = dashboards?.find((d) => d.id === dId)
+
+  const onExport = async (fmt: 'csv' | 'json') => {
+    setExportErr(null)
+    try {
+      const blob = await triggerExport({ id: dId, fmt }).unwrap()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dashboard-${dId}-todos.${fmt}`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setExportErr('Export failed.')
+    }
+  }
 
   if (isLoading) return <p>Loading…</p>
   if (isError || !s)
@@ -59,6 +80,16 @@ export function StatsPage() {
         {dash?.name ?? `Dashboard ${dId}`} stats
       </p>
       <h1>Analytics</h1>
+
+      <div className="add-row">
+        <button type="button" onClick={() => onExport('csv')}>
+          Export CSV
+        </button>
+        <button type="button" onClick={() => onExport('json')}>
+          Export JSON
+        </button>
+        {exportErr && <span className="form-error">{exportErr}</span>}
+      </div>
 
       <div className="stat-tiles">
         <div className="tile">

@@ -9,6 +9,8 @@ import {
   useUpdateMeMutation,
   useUpdatePreferencesMutation,
 } from '../features/api/apiSlice'
+import type { ThemePref } from '../features/api/apiSlice'
+import { applyTheme } from '../lib/theme'
 
 function formatError(err: unknown): string {
   const data = (err as { data?: unknown }).data
@@ -132,6 +134,32 @@ export function AccountPage() {
           }
         />
         Email me when I'm @mentioned
+      </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={prefs?.email_on_due ?? true}
+          onChange={(e) => updatePrefs({ email_on_due: e.target.checked })}
+        />
+        Email me when a todo is overdue or due soon
+      </label>
+
+      <h2 className="section-title">Appearance</h2>
+      <label className="check">
+        Theme
+        <select
+          className="move-select"
+          value={prefs?.theme ?? 'system'}
+          onChange={(e) => {
+            const theme = e.target.value as ThemePref
+            applyTheme(theme) // instant, no wait for the round-trip
+            updatePrefs({ theme })
+          }}
+        >
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
       </label>
 
       <h2 className="section-title">Calendar feed</h2>

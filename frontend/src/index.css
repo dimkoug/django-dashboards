@@ -1,6 +1,57 @@
+/* ---- Theme tokens ----
+   Default (no/unknown data-theme) = dark. The no-flash script in
+   index.html sets <html data-theme="light|dark"> before paint. */
 :root {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color-scheme: dark;
+
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #243049;
+  --border: #334155;
+  --border-soft: #243049;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --text-soft: #cbd5e1;
+  --text-faint: #475569;
+  --link: #818cf8;
+  --link-hover: #a5b4fc;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --on-accent: #fff;
+  --danger: #f87171;
+  --danger-2: #fca5a5;
+  --shadow-strong: rgba(0, 0, 0, 0.4);
+  --shadow-stronger: rgba(0, 0, 0, 0.5);
+  --overdue-border: #b91c1c;
+  --due-soon-border: #b45309;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --surface-2: #e2e8f0;
+  --border: #cbd5e1;
+  --border-soft: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+  --text-soft: #334155;
+  --text-faint: #94a3b8;
+  --link: #4f46e5;
+  --link-hover: #4338ca;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --on-accent: #fff;
+  --danger: #dc2626;
+  --danger-2: #b91c1c;
+  --shadow-strong: rgba(15, 23, 42, 0.12);
+  --shadow-stronger: rgba(15, 23, 42, 0.18);
+  --overdue-border: #dc2626;
+  --due-soon-border: #b45309;
 }
 
 * {
@@ -10,12 +61,12 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--text);
 }
 
 a {
-  color: #818cf8;
+  color: var(--link);
 }
 
 button {
@@ -23,12 +74,12 @@ button {
   padding: 0.45rem 0.9rem;
   border: 0;
   border-radius: 8px;
-  background: #6366f1;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   cursor: pointer;
 }
 button:hover {
-  background: #4f46e5;
+  background: var(--accent-hover);
 }
 button:disabled {
   opacity: 0.6;
@@ -38,19 +89,19 @@ button:disabled {
 input {
   font: inherit;
   padding: 0.5rem 0.65rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .move-select {
   font: inherit;
   padding: 0.3rem 0.4rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: var(--surface);
+  color: var(--text);
 }
 
 /* ---- Auth pages ---- */
@@ -58,9 +109,9 @@ input {
   max-width: 360px;
   margin: 8vh auto;
   padding: 2rem;
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 40px var(--shadow-strong);
 }
 .auth-card h1 {
   margin-top: 0;
@@ -75,15 +126,15 @@ input {
   flex-direction: column;
   gap: 0.3rem;
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 .auth-alt {
   margin-top: 1rem;
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 .form-error {
-  color: #f87171;
+  color: var(--danger);
   font-size: 0.9rem;
   margin: 0;
 }
@@ -97,14 +148,14 @@ input {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  background: #1e293b;
-  border-bottom: 1px solid #334155;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 .brand {
   font-weight: 700;
   font-size: 1.1rem;
   text-decoration: none;
-  color: #e2e8f0;
+  color: var(--text);
 }
 .nav {
   display: flex;
@@ -113,12 +164,12 @@ input {
   margin-left: 1.5rem;
 }
 .nav a {
-  color: #94a3b8;
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.9rem;
 }
 .nav a.active {
-  color: #e2e8f0;
+  color: var(--text);
   font-weight: 600;
 }
 .bell-wrap {
@@ -146,10 +197,10 @@ input {
   width: 320px;
   max-height: 60vh;
   overflow-y: auto;
-  background: #1e293b;
-  border: 1px solid #334155;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 40px var(--shadow-stronger);
   z-index: 50;
 }
 .bell-head {
@@ -157,7 +208,7 @@ input {
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid var(--border);
 }
 .bell-menu ul {
   list-style: none;
@@ -169,24 +220,35 @@ input {
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid #243049;
+  border-bottom: 1px solid var(--border-soft);
   cursor: pointer;
   font-size: 0.85rem;
 }
 .bell-item:hover {
-  background: #243049;
+  background: var(--surface-2);
 }
 .bell-item.unread {
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid var(--accent);
 }
 .topbar-search input {
   font: inherit;
   padding: 0.35rem 0.6rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--text);
   width: 160px;
+}
+.theme-toggle {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+}
+.theme-toggle:hover {
+  background: var(--surface-2);
+  color: var(--text);
 }
 .saved-views {
   display: flex;
@@ -200,8 +262,8 @@ input {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  background: #1e293b;
-  border: 1px solid #4f46e5;
+  background: var(--surface);
+  border: 1px solid var(--accent-hover);
   border-radius: 10px;
   padding: 0.5rem 0.75rem;
   margin: 0 0 1rem;
@@ -210,17 +272,17 @@ input {
 .bulk-bar select {
   font: inherit;
   padding: 0.3rem 0.4rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--bg);
+  color: var(--text);
 }
 .bulk-check {
   margin-right: 0.5rem;
 }
 .view-chip {
-  background: #334155;
-  color: #e2e8f0;
+  background: var(--border);
+  color: var(--text);
 }
 .chip-apply {
   background: transparent;
@@ -241,8 +303,8 @@ input {
   font-size: 0.7rem;
   padding: 0.2rem 0.5rem;
   border-radius: 999px;
-  background: #334155;
-  color: #cbd5e1;
+  background: var(--border);
+  color: var(--text-soft);
 }
 .badge.done {
   background: #14532d;
@@ -264,10 +326,10 @@ input {
 .filter-bar select {
   font: inherit;
   padding: 0.4rem 0.55rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: var(--surface);
+  color: var(--text);
 }
 
 /* ---- My Todos sections ---- */
@@ -276,22 +338,25 @@ input {
 }
 .section-title {
   font-size: 1rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  border-bottom: 1px solid #334155;
+  border-bottom: 1px solid var(--border);
   padding-bottom: 0.25rem;
 }
 .section-title.overdue {
-  color: #fca5a5;
+  color: var(--danger-2);
 }
 .section-title .count {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .kanban-card.overdue {
-  border-color: #b91c1c;
+  border-color: var(--overdue-border);
+}
+.kanban-card.due-soon {
+  border-color: var(--due-soon-border);
 }
 
 /* ---- Labels & priority ---- */
@@ -328,8 +393,8 @@ input {
   color: #bfdbfe;
 }
 .badge.prio-medium {
-  background: #334155;
-  color: #cbd5e1;
+  background: var(--border);
+  color: var(--text-soft);
 }
 .badge.prio-high {
   background: #7f1d1d;
@@ -340,16 +405,16 @@ input {
   flex: 1 1 100%;
   min-height: 60px;
   padding: 0.5rem 0.65rem;
-  border: 1px solid #334155;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: var(--surface);
+  color: var(--text);
   resize: vertical;
 }
 .desc-html {
   display: block;
   margin-top: 0.4rem;
-  color: #cbd5e1;
+  color: var(--text-soft);
   font-size: 0.8rem;
 }
 .desc-html p {
@@ -370,14 +435,14 @@ input {
 }
 .kanban-lane {
   flex: 0 0 240px;
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 12px;
   padding: 0.75rem;
   border: 2px solid transparent;
 }
 .kanban-lane.over {
-  border-color: #6366f1;
-  background: #243049;
+  border-color: var(--accent);
+  background: var(--surface-2);
 }
 .kanban-lane h3 {
   margin: 0 0 0.75rem;
@@ -388,7 +453,7 @@ input {
 }
 .kanban-lane .count {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .kanban-cards {
   display: flex;
@@ -397,8 +462,8 @@ input {
   min-height: 40px;
 }
 .kanban-card {
-  background: #0f172a;
-  border: 1px solid #334155;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.6rem 0.7rem;
   cursor: grab;
@@ -411,11 +476,11 @@ input {
 }
 .card-title.done {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .card-meta {
   font-size: 0.7rem;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .card-tags {
   display: flex;
@@ -432,13 +497,13 @@ input {
 .comments {
   flex: 1 1 100%;
   margin-top: 0.75rem;
-  border-top: 1px solid #334155;
+  border-top: 1px solid var(--border);
   padding-top: 0.5rem;
 }
 .comments h4 {
   margin: 0 0 0.5rem;
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 .comment-list {
   list-style: none;
@@ -449,7 +514,7 @@ input {
   gap: 0.4rem;
 }
 .comment-list li {
-  background: #0f172a;
+  background: var(--bg);
   border-radius: 8px;
   padding: 0.4rem 0.6rem;
 }
@@ -465,10 +530,10 @@ input {
 }
 .subtask-row .done {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .mention {
-  color: #818cf8;
+  color: var(--link);
   font-weight: 600;
 }
 .activity-feed {
@@ -479,7 +544,7 @@ input {
   flex-direction: column;
   gap: 0.35rem;
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: var(--text-soft);
 }
 .auth-card-inline {
   display: flex;
@@ -496,7 +561,7 @@ input {
   margin: 1rem 0 1.5rem;
 }
 .tile {
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 12px;
   padding: 1rem 1.5rem;
   min-width: 110px;
@@ -507,11 +572,11 @@ input {
   font-weight: 700;
 }
 .tile-num.overdue {
-  color: #f87171;
+  color: var(--danger);
 }
 .tile-label {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 .stat-row {
   display: flex;
@@ -522,12 +587,12 @@ input {
 .stat-label {
   width: 90px;
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   text-align: right;
 }
 .stat-track {
   flex: 1;
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 6px;
   height: 14px;
   overflow: hidden;
@@ -535,13 +600,13 @@ input {
 .stat-fill {
   display: block;
   height: 100%;
-  background: #6366f1;
+  background: var(--accent);
 }
 .stat-fill.prio-high {
   background: #ef4444;
 }
 .stat-fill.prio-medium {
-  background: #6366f1;
+  background: var(--accent);
 }
 .stat-fill.prio-low {
   background: #3b82f6;
@@ -552,17 +617,17 @@ input {
 .stat-num {
   width: 32px;
   font-size: 0.8rem;
-  color: #cbd5e1;
+  color: var(--text-soft);
   text-align: right;
 }
 .empty-lane {
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--text-faint);
   text-align: center;
   margin: 0.5rem 0;
 }
 .user {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 .content {
@@ -573,7 +638,7 @@ input {
 
 /* ---- Resource lists ---- */
 .crumbs {
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 .add-row {
@@ -597,43 +662,43 @@ input {
   align-items: center;
   gap: 0.75rem;
   padding: 0.65rem 0.9rem;
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 10px;
 }
 .resource-name {
   flex: 1;
   text-decoration: none;
-  color: #e2e8f0;
+  color: var(--text);
 }
 .resource-name.done {
   text-decoration: line-through;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .check {
   display: flex;
   align-items: center;
   gap: 0.35rem;
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 .empty {
-  color: #64748b;
+  color: var(--text-dim);
   justify-content: center;
 }
 .link-btn {
   background: transparent;
-  color: #818cf8;
+  color: var(--link);
   padding: 0.25rem 0.4rem;
 }
 .link-btn:hover {
   background: transparent;
-  color: #a5b4fc;
+  color: var(--link-hover);
 }
 .link-btn.danger {
-  color: #f87171;
+  color: var(--danger);
 }
 .link-btn.danger:hover {
-  color: #fca5a5;
+  color: var(--danger-2);
 }
 
 /* ---- Todo dates ---- */
@@ -646,7 +711,7 @@ input {
   flex-direction: column;
   gap: 0.2rem;
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 .todo-item {
   flex-wrap: wrap;
@@ -655,7 +720,7 @@ input {
   display: block;
   margin-top: 0.2rem;
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--text-dim);
 }
 .edit-grid {
   display: flex;

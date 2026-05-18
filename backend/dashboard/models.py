@@ -236,10 +236,20 @@ class Webhook(Timestamped):
 
 
 class UserPreference(models.Model):
+    class Theme(models.TextChoices):
+        SYSTEM = 'system', 'System'
+        LIGHT = 'light', 'Light'
+        DARK = 'dark', 'Dark'
+
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='preference')
     email_on_assign = models.BooleanField(default=True)
     email_on_mention = models.BooleanField(default=True)
+    # Email me when one of my todos is overdue / due soon (notify_due).
+    email_on_due = models.BooleanField(default=True)
+    # UI colour scheme; 'system' follows the OS preference.
+    theme = models.CharField(
+        max_length=10, choices=Theme.choices, default=Theme.SYSTEM)
 
     def __str__(self):
         return f'prefs for {self.user}'

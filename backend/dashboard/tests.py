@@ -19,7 +19,8 @@ def make_user(username, password='Str0ngPass!9'):
 class AuthTests(APITestCase):
     def test_register_then_login(self):
         r = self.client.post('/api/auth/register/', {
-            'username': 'alice', 'password': 'Str0ngPass!9'}, format='json')
+            'username': 'alice', 'password': 'Str0ngPass!9',
+            'password2': 'Str0ngPass!9'}, format='json')
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)
         r = self.client.post('/api/auth/token/', {
             'username': 'alice', 'password': 'Str0ngPass!9'}, format='json')
@@ -28,7 +29,14 @@ class AuthTests(APITestCase):
 
     def test_weak_password_rejected(self):
         r = self.client.post('/api/auth/register/', {
-            'username': 'bob', 'password': '123'}, format='json')
+            'username': 'bob', 'password': '123',
+            'password2': '123'}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_password_mismatch_rejected(self):
+        r = self.client.post('/api/auth/register/', {
+            'username': 'carol', 'password': 'Str0ngPass!9',
+            'password2': 'Different!9'}, format='json')
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_unauthenticated_rejected(self):
@@ -1052,5 +1060,153 @@ class EmailNotificationTests(ApiTestCase):
         self.auth(self.member)
         r = self.client.get('/api/auth/preferences/')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.data, {
+            'email_on_assign': True,
+            'email_on_mention': True,
+            'email_on_due': True,
+            'theme': 'system',
+        })
+
+
+class PreferenceThemeTests(ApiTestCase):
+    def setUp(self):
+        self.u = make_user('thu')
+
+    def test_get_default_and_update(self):
+        self.auth(self.u)
+        r = self.client.get('/api/auth/preferences/')
+        self.assertEqual(r.data['theme'], 'system')
+        r = self.client.patch('/api/auth/preferences/',
+                              {'theme': 'dark'}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.data['theme'], 'dark')
+
+    def test_invalid_theme_rejected(self):
+        self.auth(self.u)
+        r = self.client.patch('/api/auth/preferences/',
+                              {'theme': 'neon'}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('theme', r.data)
+
+
+class ExportTests(ApiTestCase):
+    def setUp(self):
+        self.owner = make_user('exowner')
+        self.outsider = make_user('exout')
+        self.d = DashBoard.objects.create(user=self.owner, name='D')
+        self.col = Column.objects.create(dashboard=self.d, name='Doing')
+        self.t = Todo.objects.create(column=self.col, name='Task A',
+                                     priority='high')
+        self.t.users.add(self.owner)
+        lbl = Label.objects.create(dashboard=self.d, name='urgent')
+        self.t.labels.add(lbl)
+
+    def test_csv_export(self):
+        self.auth(self.owner)
+        r = self.client.get(f'/api/dashboards/{self.d.id}/export/?fmt=csv')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertIn('text/csv', r['Content-Type'])
+        self.assertIn('attachment', r['Content-Disposition'])
+        self.assertIn(f'dashboard-{self.d.id}-todos.csv',
+                      r['Content-Disposition'])
+        body = r.content.decode()
+        self.assertIn('id,column,name,priority', body)  # header
+        self.assertIn('Task A', body)
+        self.assertIn('exowner', body)   # assignee column
+        self.assertIn('urgent', body)    # labels column
+
+    def test_json_export(self):
+        self.auth(self.owner)
+        r = self.client.get(f'/api/dashboards/{self.d.id}/export/?fmt=json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertIn('application/json', r['Content-Type'])
+        import json as _json
+        data = _json.loads(r.content)
+        self.assertEqual(data['dashboard'], 'D')
+        self.assertEqual(len(data['todos']), 1)
+        self.assertEqual(data['todos'][0]['name'], 'Task A')
+        self.assertEqual(data['todos'][0]['assignees'], 'exowner')
+
+    def test_default_csv_and_bad_format(self):
+        self.auth(self.owner)
+        r = self.client.get(f'/api/dashboards/{self.d.id}/export/')
+        self.assertIn('text/csv', r['Content-Type'])
+        bad = self.client.get(
+            f'/api/dashboards/{self.d.id}/export/?fmt=xml')
+        self.assertEqual(bad.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_access_controlled(self):
+        self.auth(self.outsider)
+        r = self.client.get(f'/api/dashboards/{self.d.id}/export/?fmt=csv')
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class DueReminderTests(ApiTestCase):
+    def setUp(self):
+        from django.utils import timezone
+        self.owner = make_user('drowner')
+        self.assignee = make_user('drassignee')
+        self.assignee.email = 'dr@example.com'
+        self.assignee.save(update_fields=['email'])
+        self.d = DashBoard.objects.create(user=self.owner, name='D')
+        self.d.users.add(self.assignee)
+        self.col = Column.objects.create(dashboard=self.d, name='c')
+        now = timezone.now()
+        self.overdue = Todo.objects.create(
+            column=self.col, name='late',
+            end_date=now - timezone.timedelta(hours=3))
+        self.overdue.users.add(self.assignee)
+        self.soon = Todo.objects.create(
+            column=self.col, name='soon', start_date=now,
+            end_date=now + timezone.timedelta(hours=2))
+        self.soon.users.add(self.assignee)
+        self.far = Todo.objects.create(
+            column=self.col, name='far', start_date=now,
+            end_date=now + timezone.timedelta(days=30))
+        self.far.users.add(self.assignee)
+        self.done = Todo.objects.create(
+            column=self.col, name='donetask', completed=True,
+            end_date=now - timezone.timedelta(days=1))
+        self.done.users.add(self.assignee)
+
+    def _run(self):
+        from django.core.management import call_command
+        call_command('notify_due', verbosity=0)
+
+    def test_creates_overdue_and_soon_once(self):
+        from .models import Notification
+        mail.outbox = []
+        self._run()
+        kinds = sorted(
+            Notification.objects.filter(user=self.assignee)
+            .values_list('kind', flat=True))
+        self.assertEqual(kinds, ['due_overdue', 'due_soon'])
+        self.assertEqual(len(mail.outbox), 2)
+        # Idempotent: a second run creates no new notifications/emails.
+        mail.outbox = []
+        self._run()
         self.assertEqual(
-            r.data, {'email_on_assign': True, 'email_on_mention': True})
+            Notification.objects.filter(user=self.assignee).count(), 2)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_far_future_and_completed_skipped(self):
+        from .models import Notification
+        self._run()
+        texts = ' '.join(
+            Notification.objects.filter(user=self.assignee)
+            .values_list('text', flat=True))
+        self.assertNotIn('far', texts)
+        self.assertNotIn('donetask', texts)
+
+    def test_due_email_opt_out(self):
+        self.auth(self.assignee)
+        r = self.client.patch('/api/auth/preferences/',
+                              {'email_on_due': False}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        mail.outbox = []
+        self._run()
+        self.assertEqual(len(mail.outbox), 0)
+        # Notifications are still recorded; only email is suppressed.
+        from .models import Notification
+        self.assertEqual(
+            Notification.objects.filter(user=self.assignee).count(), 2)

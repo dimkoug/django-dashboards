@@ -1,4 +1,7 @@
+import csv
 import datetime
+import io
+import json
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -179,6 +182,68 @@ class DashBoardViewSet(viewsets.ModelViewSet):
                 for r in by_assignee
             ],
         })
+
+    # A non-DRF query param ('fmt', not 'format') so it never collides
+    # with DRF's content-negotiation format override.
+    EXPORT_COLUMNS = [
+        'id', 'column', 'name', 'priority', 'completed', 'assignees',
+        'labels', 'recurrence', 'position', 'start_date', 'end_date',
+        'created_at',
+    ]
+
+    @action(detail=True, methods=['get'])
+    def export(self, request, pk=None):
+        """Download a dashboard's todos as CSV (default) or JSON.
+
+        ?fmt=csv | json   (access-checked via get_object()).
+        """
+        dashboard = self.get_object()
+        fmt = (request.query_params.get('fmt') or 'csv').lower()
+        if fmt not in ('csv', 'json'):
+            return Response({'fmt': 'Use fmt=csv or fmt=json.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        todos = (
+            Todo.objects
+            .filter(column__dashboard=dashboard)
+            .select_related('column')
+            .prefetch_related('users', 'labels')
+            .order_by('column__name', 'position', 'id')
+        )
+        rows = [{
+            'id': t.id,
+            'column': t.column.name,
+            'name': t.name,
+            'priority': t.priority,
+            'completed': t.completed,
+            'assignees': ';'.join(
+                sorted(u.username for u in t.users.all())),
+            'labels': ';'.join(sorted(lbl.name for lbl in t.labels.all())),
+            'recurrence': t.recurrence,
+            'position': t.position,
+            'start_date': t.start_date.isoformat() if t.start_date else '',
+            'end_date': t.end_date.isoformat() if t.end_date else '',
+            'created_at': t.created_at.isoformat(),
+        } for t in todos]
+
+        base = f'dashboard-{dashboard.id}-todos'
+        if fmt == 'json':
+            body = json.dumps(
+                {'dashboard': dashboard.name, 'todos': rows}, indent=2)
+            resp = HttpResponse(
+                body, content_type='application/json; charset=utf-8')
+            resp['Content-Disposition'] = (
+                f'attachment; filename="{base}.json"')
+            return resp
+
+        buf = io.StringIO()
+        writer = csv.DictWriter(buf, fieldnames=self.EXPORT_COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+        resp = HttpResponse(
+            buf.getvalue(), content_type='text/csv; charset=utf-8')
+        resp['Content-Disposition'] = f'attachment; filename="{base}.csv"'
+        return resp
 
 
 class ColumnViewSet(viewsets.ModelViewSet):

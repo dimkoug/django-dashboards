@@ -22,6 +22,7 @@ export function SignupPage() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [register, { isLoading }] = useRegisterMutation()
   const [login] = useLoginMutation()
   const dispatch = useAppDispatch()
@@ -31,8 +32,12 @@ export function SignupPage() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.")
+      return
+    }
     try {
-      await register({ username, email, password }).unwrap()
+      await register({ username, email, password, password2: confirmPassword }).unwrap()
       // Auto-login right after a successful registration.
       const tokens = await login({ username, password }).unwrap()
       dispatch(setCredentials({ ...tokens, username }))
@@ -71,6 +76,16 @@ export function SignupPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            required
+          />
+        </label>
+        <label>
+          Confirm password
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             autoComplete="new-password"
             required
           />

@@ -22,17 +22,18 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # Shared by the celery / celery-beat services so the backend image is
+    # built once and reused (same code, same deps).
+    image: django-dashboards-backend
 
-    # Startup tasks (makemigrations, migrate, collectstatic) run here in the
-    # service command, not in entrypoint.sh. Migrations are regenerated on every
-    # start (no migration files are committed) and logged at verbosity 2.
-    # entrypoint.sh now only waits for the DB before handing off here.
+    # Startup tasks (migrate, collectstatic) run here in the service command,
+    # not in entrypoint.sh. Migrations are committed to the repo
+    # (dashboard/migrations/) and only applied here — no makemigrations at
+    # runtime. entrypoint.sh only waits for the DB before handing off here.
     command:
       - sh
       - -c
       - |
-        echo "================ [web] makemigrations (auto, every start) ================"
-        python manage.py makemigrations --noinput --verbosity 2
         echo "================ [web] migrate =========================================="
         python manage.py migrate --noinput --verbosity 2
         echo "================ [web] collectstatic ===================================="
@@ -68,6 +69,53 @@ services:
       # Attachment uploads land here; shared read-only with nginx.
       - media_volume:/app/mediafiles
 
+  # Celery worker — runs background/scheduled tasks (e.g. due reminders).
+  # Reuses the backend image; no migrations/collectstatic (web owns those).
+  celery:
+    image: django-dashboards-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    command: celery -A backend worker -l info
+
+    env_file:
+      - .env
+
+    environment:
+      DB_HOST: pgbouncer
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+    depends_on:
+      - web
+      - pgbouncer
+      - redis
+
+  # Celery beat — the scheduler. Enqueues periodic tasks (notify_due) onto
+  # the Redis broker for the worker above to execute.
+  celery-beat:
+    image: django-dashboards-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    command: celery -A backend beat -l info
+
+    env_file:
+      - .env
+
+    environment:
+      DB_HOST: pgbouncer
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+    depends_on:
+      - web
+      - redis
+
   redis:
     image: redis:7-alpine
     # Internal only — used by Channels as the cross-worker pub/sub layer.
@@ -83,7 +131,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
 
     ports:
-      - "15432:5432"
+      - "15433:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -111,7 +159,7 @@ services:
       DEFAULT_POOL_SIZE: 50
 
     ports:
-      - "16432:5432"
+      - "16433:5432"
 
 volumes:
   postgres_data:

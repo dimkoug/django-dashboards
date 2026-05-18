@@ -38,6 +38,17 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# ---- Docker ----
+# Local dev-only compose overrides (bind mounts, --reload). Never deployed.
+docker-compose.override.yml
+
+# ---- Celery ----
+# Celery beat's PersistentScheduler db (runtime artifact; written into the
+# bind-mounted ./backend in dev). Never source.
+celerybeat-schedule
+celerybeat-schedule*
+celerybeat.pid
+
 # ---- Claude Code ----
 # Ignore all .claude/ directories entirely (root and nested, e.g. backend/.claude/).
 .claude/

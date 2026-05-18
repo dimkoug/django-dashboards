@@ -71,6 +71,15 @@ export interface Me {
   email: string
 }
 
+export type ThemePref = 'system' | 'light' | 'dark'
+
+export interface Preferences {
+  email_on_assign: boolean
+  email_on_mention: boolean
+  email_on_due: boolean
+  theme: ThemePref
+}
+
 export interface Comment {
   id: number
   todo: number
@@ -228,7 +237,7 @@ export const api = createApi({
     // ---- Auth ----
     register: builder.mutation<
       { id: number; username: string; email: string },
-      { username: string; email: string; password: string }
+      { username: string; email: string; password: string; password2: string }
     >({
       query: (body) => ({ url: '/auth/register/', method: 'POST', body }),
     }),
@@ -267,17 +276,11 @@ export const api = createApi({
     createWsTicket: builder.mutation<{ ticket: string }, void>({
       query: () => ({ url: '/ws-ticket/', method: 'POST' }),
     }),
-    getPreferences: builder.query<
-      { email_on_assign: boolean; email_on_mention: boolean },
-      void
-    >({
+    getPreferences: builder.query<Preferences, void>({
       query: () => '/auth/preferences/',
       providesTags: [{ type: 'Me', id: 'PREFS' }],
     }),
-    updatePreferences: builder.mutation<
-      { email_on_assign: boolean; email_on_mention: boolean },
-      { email_on_assign?: boolean; email_on_mention?: boolean }
-    >({
+    updatePreferences: builder.mutation<Preferences, Partial<Preferences>>({
       query: (body) => ({
         url: '/auth/preferences/',
         method: 'PATCH',
@@ -639,6 +642,20 @@ export const api = createApi({
       providesTags: [{ type: 'Todo', id: 'LIST' }],
     }),
 
+    // ---- Export (CSV/JSON download) ----
+    // Returns the raw Blob so the caller can trigger a file download.
+    // Used as a lazy query so it never caches the binary payload.
+    exportDashboard: builder.query<
+      Blob,
+      { id: number; fmt: 'csv' | 'json' }
+    >({
+      query: ({ id, fmt }) => ({
+        url: `/dashboards/${id}/export/?fmt=${fmt}`,
+        responseHandler: (response) => response.blob(),
+      }),
+      keepUnusedDataFor: 0,
+    }),
+
     // ---- Attachments ----
     getAttachments: builder.query<Attachment[], number>({
       query: (todoId) => `/attachments/?todo=${todoId}&page_size=1000`,
@@ -721,6 +738,7 @@ export const {
   useAddSavedViewMutation,
   useDeleteSavedViewMutation,
   useGetDashboardStatsQuery,
+  useLazyExportDashboardQuery,
   useGetAttachmentsQuery,
   useAddAttachmentMutation,
   useDeleteAttachmentMutation,
