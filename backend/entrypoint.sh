@@ -19,6 +19,8 @@ else:
     sys.exit(f"Database {host}:{port} not reachable after 30s")
 PY
 
+# Generate migrations from current models, then apply them, before the server starts.
+python manage.py makemigrations --noinput
 python manage.py migrate --noinput
 python manage.py collectstatic --noinput
 
