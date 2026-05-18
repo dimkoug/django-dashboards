@@ -1,0 +1,55 @@
+# ---- Secrets / environment ----
+# .env holds the real SECRET_KEY and DB password — never commit it.
+.env
+.env.*
+!.env.sample
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# ---- Virtual environments ----
+venv/
+.venv/
+env/
+ENV/
+
+# ---- Django ----
+*.log
+*.sqlite3
+db.sqlite3
+# Collected static (output of collectstatic) and user uploads — generated, not source.
+# Note: backend/static/ (hand-written assets) is intentionally NOT ignored.
+backend/staticfiles/
+backend/mediafiles/
+local_settings.py
+
+# ---- Frontend (Node) ----
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---- Claude Code ----
+# Shared project config (.claude/settings.json, commands) is committed;
+# only personal/local overrides are ignored.
+.claude/settings.local.json
+
+# ---- IDE / editor ----
+.idea/
+.vscode/
+*.swp
+*~
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini

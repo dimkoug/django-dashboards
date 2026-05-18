@@ -1,0 +1,102 @@
+services:
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    depends_on:
+      - web
+
+    volumes:
+      # Django's collected static, served by nginx at /static/ (read-only).
+      - static_volume:/app/staticfiles:ro
+      # Uploaded attachments, served by nginx at /media/ (read-only).
+      - media_volume:/app/mediafiles:ro
+
+    ports:
+      # Public entrypoint for the whole app (React SPA + proxied /api & /admin).
+      - "9005:80"
+
+  web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    # Loads DJANGO_* and DB_* from the project-root .env.
+    env_file:
+      - .env
+
+    environment:
+      # Override the host-side DB address: inside the Compose network Django
+      # reaches pgbouncer by service name. These win over the .env values.
+      DB_HOST: pgbouncer
+      DB_PORT: 5432
+      # Channels layer — reach redis by service name.
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+    depends_on:
+      - pgbouncer
+      - redis
+
+    # No host port: nginx (frontend) is the only public entrypoint and
+    # reaches Django over the compose network as http://web:8000.
+    expose:
+      - "8000"
+
+    volumes:
+      # collectstatic writes here on startup; shared read-only with nginx.
+      - static_volume:/app/staticfiles
+      # Attachment uploads land here; shared read-only with nginx.
+      - media_volume:/app/mediafiles
+
+  redis:
+    image: redis:7-alpine
+    # Internal only — used by Channels as the cross-worker pub/sub layer.
+    expose:
+      - "6379"
+
+  postgres:
+    image: postgres:17
+
+    environment:
+      POSTGRES_DB: ${DB_NAME:-dashboard}
+      POSTGRES_USER: ${DB_USER:-dashboard}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+
+    ports:
+      - "15432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+
+    depends_on:
+      - postgres
+
+    environment:
+      # DB_HOST/DB_PORT here are the in-network address of the postgres
+      # container — not the host-side values from .env.
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-dashboard}
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      DB_NAME: ${DB_NAME:-dashboard}
+
+      AUTH_TYPE: scram-sha-256
+
+      POOL_MODE: transaction
+
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 50
+
+    ports:
+      - "16432:5432"
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
