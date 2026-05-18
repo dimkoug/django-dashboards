@@ -1,0 +1,12 @@
+# Pinned to the versions verified in the running stack (reproducible builds).
+Django==6.0.5
+djangorestframework==3.17.1
+djangorestframework-simplejwt==5.5.1
+markdown==3.10.2
+nh3==0.3.5
+django-filter==25.2
+python-dotenv==1.2.2
+psycopg==3.3.4
+uvicorn[standard]==0.47.0
+channels==4.3.2
+channels-redis==4.3.0
