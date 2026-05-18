@@ -23,6 +23,23 @@ services:
       context: ./backend
       dockerfile: Dockerfile
 
+    # Startup tasks (makemigrations, migrate, collectstatic) run here in the
+    # service command, not in entrypoint.sh. Migrations are regenerated on every
+    # start (no migration files are committed) and logged at verbosity 2.
+    # entrypoint.sh now only waits for the DB before handing off here.
+    command:
+      - sh
+      - -c
+      - |
+        echo "================ [web] makemigrations (auto, every start) ================"
+        python manage.py makemigrations --noinput --verbosity 2
+        echo "================ [web] migrate =========================================="
+        python manage.py migrate --noinput --verbosity 2
+        echo "================ [web] collectstatic ===================================="
+        python manage.py collectstatic --noinput
+        echo "================ [web] startup tasks done ==============================="
+        exec uvicorn backend.asgi:application --host 0.0.0.0 --port 8000 --workers 3
+
     # Loads DJANGO_* and DB_* from the project-root .env.
     env_file:
       - .env
